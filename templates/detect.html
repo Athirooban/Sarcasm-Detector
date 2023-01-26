@@ -1,0 +1,129 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Sarcasm Detector-CHG IT Consultancy</title>
+<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.1/css/bootstrap.min.css" integrity="sha384-WskhaSGFgHYWDcbwN70/dfYBj47jz9qbsMId/iRN3ewGhXQFZCSftd1LZCfmhktB" crossorigin="anonymous">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style type="text/css">
+nav.bg-dark {
+    background-color: #000080 !important;
+    color: white;
+}
+#example {
+    margin: 0 auto;
+
+}
+h6 {
+    color: #B4B2B2;
+}
+</style>
+</head>
+<body>
+<header>
+  <nav class="navbar navbar-expand-lg navbar-dark bg-dark"><div class="navbar-brand"> <h2>Sarcasm Detector</h2> </div></nav>
+</header>
+<main>
+  <div class="container-fluid mt-5">
+    <div class="">
+      <div class=""> 
+        <h5 style="color:#000000">Enter sentence like "Wow I never thought of this!" or "I like to drive a bike." </h5>
+        <!--<h6 style="color:B4B2B2">Type your sentence below</h6>-->
+        <div class="w-100 d-flex justify-content-between mt-3">
+          <input id="text" class="w-100 p-2" placeholder="Type your sentence..." maxlength="500"/>
+          <button type="button" id="predict-button" class="btn btn-dark float-right ml-3">Predict</button>
+        </div>
+        <span id="name-feedback" style="color:red"></span><br>
+      </div>
+      <p id="greeting"></p>
+    </div>
+    <div class="mx-auto col-lg-4 text-center"><h4 id="prediction" style="color:#38DD2A"></h4>
+    <div id="example"></div>
+</div>
+    <h6 id="note-list" style="text-align:center"></h6>
+    <!--<div class="container-fluid></div>-->
+  </div>
+</main>
+</body>
+<script src="https://code.jquery.com/jquery-3.3.1.min.js"></script>
+<script src="static/circleDonutChart.js"></script>
+
+<script>
+/*#811*/
+$("#text").blur(function() {
+   var sen = $(this).val();
+   if (sen.trim().length <= 7) {
+     $(this).css("box-shadow", "0 0 8px #FF0000");
+   } else {
+     $(this).css("box-shadow", "0 0 8px #181");
+   }
+});
+
+$("#predict-button").click(function(event){
+	let message = {
+		sentence: $("#text").val()
+	}
+	var name = $("#text").val();
+	validateNameField(name, event);
+   
+	$.post("/detect", JSON.stringify(message), function(response){
+		/*$("#greeting").text(response.greeting);*/
+		var res = JSON.parse(response.prediction);
+		let result;
+		if (res  == 600){
+			error_message = "Oops..Database error!";
+			$("#example").empty();
+			$("#prediction").empty();
+			$("#note-list").empty();
+			document.getElementById("prediction").innerHTML = error_message;
+		}
+		if (res != 500){
+			result = res*100;
+			result = +result.toFixed(2);
+			let pred;
+			let circle;
+			let note = '(Note: If Sarcastic result is greater than or equal to 50% then the input will be considered as Sarcastic sentence)';
+			
+			if (result >= 50){
+				pred = "This is a Sarcastic sentence.";
+			}
+			else {
+				pred = "This is a Non-Sarcastic sentence.";
+			}
+		
+			$("#example").empty();
+			circle = new circleDonutChart('example');	
+			circle.draw({
+			end:result,
+			start:0, 
+			maxValue:100, 
+			titlePosition:"outer-top", 
+			titleText:"[Sarcastic Result]", 
+			titleColor:'#000000',
+			outerCircleColor:'#0085c8', 
+			innerCircleColor:'#909081' 
+			});
+			document.getElementById("prediction").innerHTML = pred;
+			document.getElementById("note-list").innerHTML = note;
+			}
+		else{
+			$("#example").empty();
+			$("#prediction").empty();
+			$("#note-list").empty();
+		}
+		});
+		
+	function validateNameField(name, event) {
+		if (!isValidName(name)) {
+			$("#name-feedback").text("Please enter a sentence!");
+			event.preventDefault();
+		} else {
+			$("#name-feedback").text("");
+		}
+	}
+	function isValidName(name) {
+		return name.trim().length >= 8;
+	}
+});
+</script>
+</html>
